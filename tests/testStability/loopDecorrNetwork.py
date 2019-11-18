@@ -2,7 +2,9 @@
 number of successful experiments and exceptions are then written to
 filenameRun and filenameExc
 '''
+from __future__ import print_function
 
+from builtins import str
 import sys
 sys.path.append('$SYMAP2IC_PATH/src/helpers')
 import os
@@ -34,8 +36,8 @@ def run(hostname, port):
         while proc.poll() is None:
             line = proc.stdout.readline()
             lines.append(line)
-            print line,
-        print ''
+            print(line, end=' ')
+        print('')
 
         returncode = proc.wait()
         listException = [line for line in lines if 'exception' in line]

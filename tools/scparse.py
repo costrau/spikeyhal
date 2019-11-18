@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import division
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # This file contains a python SpikeyConfig class to parse
 # the entire chip configuration from the file
@@ -7,6 +9,11 @@
 # Author: Johannes Bill
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+from builtins import zip
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import numpy as np
 
 # # # # # # # # # # # # # # # # # # # # # # # #
@@ -28,7 +35,7 @@ nProbepad = 1
 class Neuron(object):
   def __init__(self, id):
     self.id = int(id)
-    self.block = self.id / nNeuronPerBlock
+    self.block = old_div(self.id, nNeuronPerBlock)
     self.blockid = self.id % nNeuronPerBlock
     self.initialized = False
     self.recspike = False
@@ -48,7 +55,7 @@ class Neuron(object):
 class Driver(object):
   def __init__(self, id):
     self.id = int(id)
-    self.block = self.id / nDrvPerBlock
+    self.block = old_div(self.id, nDrvPerBlock)
     self.blockid = self.id % nDrvPerBlock
     self.initialized = False
     self.srctype = None         # "ext", "block0", "block1"
@@ -95,23 +102,23 @@ class Driver(object):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def load_chip_param(X, CP, VERBOSE):
-  if VERBOSE: print " > Loading global chip parameters."
+  if VERBOSE: print(" > Loading global chip parameters.")
   for ln,x in enumerate(X):
     if "ud_chip" in x:
-      if VERBOSE: print " > Start of chip parameters detected at line %d." % (ln+2)
+      if VERBOSE: print(" > Start of chip parameters detected at line %d." % (ln+2))
       break
   _,tsense,_,tpcsec,_,tpcorperiod = X[ln+1].strip().split(' ')
   CP['tsense'] = tsense
   CP['tpcsec'] = tpcsec
   CP['tpcorperiod'] = tpcorperiod
-  if VERBOSE: print " > Global chip parameters loaded."
+  if VERBOSE: print(" > Global chip parameters loaded.")
 
 
 def load_dac_param(X, DP, VERBOSE):
-  if VERBOSE: print " > Loading DAC parameters."
+  if VERBOSE: print(" > Loading DAC parameters.")
   for ln,x in enumerate(X):
     if "ud_dac" in x:
-      if VERBOSE: print " > Start of DAC parameters detected at line %d." % (ln+2)
+      if VERBOSE: print(" > Start of DAC parameters detected at line %d." % (ln+2))
       break
   _,irefdac,_,vcasdac,_,vm,_,vstart,_,vrest = X[ln+1].strip().split(' ')
   DP['irefdac'] = irefdac
@@ -119,7 +126,7 @@ def load_dac_param(X, DP, VERBOSE):
   DP['vm'] = vm
   DP['vstart'] = vstart
   DP['vrest'] = vrest
-  if VERBOSE: print " > DAC parameters loaded."
+  if VERBOSE: print(" > DAC parameters loaded.")
 
 
 def load_analog_param(X, AP, VERBOSE):
@@ -131,13 +138,13 @@ def load_analog_param(X, AP, VERBOSE):
   AP['voutbias'] = np.zeros((nBlock, nVout), dtype=object)
   AP['probepad'] = np.zeros((nBlock, nProbepad), dtype=object)
   AP['probebias'] = np.zeros((nBlock, nProbepad), dtype=object)
-  if VERBOSE: print " > Loading analog parameters."
+  if VERBOSE: print(" > Loading analog parameters.")
   # Synapse params
   for ln,x in enumerate(X):
     if "ud_param" in x:
-      if VERBOSE: print " > Start of analog parameters detected at line %d." % (ln+2)
+      if VERBOSE: print(" > Start of analog parameters detected at line %d." % (ln+2))
       break
-  for i in xrange(nBlock * nDrvPerBlock):
+  for i in range(nBlock * nDrvPerBlock):
     try: # test next line
       _,sid,_,drviout,_,adjdel,_,drvifall,_,drvirise= X[ln+1].strip().split(' ')
       if int(sid) == i: # next line holds config
@@ -146,10 +153,10 @@ def load_analog_param(X, AP, VERBOSE):
       pass # nothing to be done
     _,sid,_,drviout,_,adjdel,_,drvifall,_,drvirise= X[ln].strip().split(' ')
     AP['drv'][i] = dict(drviout=drviout, adjdel=adjdel, drvifall=drvifall, drvirise=drvirise)
-    if VERBOSE: print '   > Drv %d' % i, AP['drv'][i]
+    if VERBOSE: print('   > Drv %d' % i, AP['drv'][i])
   # Neuron params
   ln += 2
-  for i in xrange(nBlock * nNeuronPerBlock):
+  for i in range(nBlock * nNeuronPerBlock):
     try: # test next line
       _,nid,_,ileak,_,icb = X[ln+1].strip().split(' ')
       if int(nid) == i: # next line holds config
@@ -158,7 +165,7 @@ def load_analog_param(X, AP, VERBOSE):
       pass # nothing to be done
     _,nid,_,ileak,_,icb = X[ln].strip().split(' ')
     AP['nrn'][i] = dict(ileak=ileak, icb=icb)
-    if VERBOSE: print '   > Nrn %d' % i, AP['nrn'][i]
+    if VERBOSE: print('   > Nrn %d' % i, AP['nrn'][i])
   # biasb
   ln += 2
   assert X[ln].strip().split(' ')[0] == "biasb", "Wrong start of line %d! Expected: biasb" % (ln+1)
@@ -172,38 +179,38 @@ def load_analog_param(X, AP, VERBOSE):
   # Vout
   ln += 1
   assert X[ln].strip().split(' ')[0] == "vout", "Wrong start of line %d! Expected: vout" % (ln+1)
-  for b in xrange(nBlock):
+  for b in range(nBlock):
     for i, v in enumerate(X[ln].strip().split()[int(b==0):]):
       AP['vout'][b,i] = v
     ln += 1
   # Voutbias
   assert X[ln].strip().split(' ')[0] == "voutbias", "Wrong start of line %d! Expected: voutbias" % (ln+1)
-  for b in xrange(nBlock):
+  for b in range(nBlock):
     for i, v in enumerate(X[ln].strip().split()[int(b==0):]):
       AP['voutbias'][b,i] = v
     ln += 1
   # probepad
   assert X[ln].strip().split(' ')[0] == "probepad", "Wrong start of line %d! Expected: probepad" % (ln+1)
-  for b in xrange(nBlock):
+  for b in range(nBlock):
     for i, v in enumerate(X[ln].strip().split()[int(b==0):]):
       AP['probepad'][b,i] = v
     ln += 1
   # probebias
   assert X[ln].strip().split(' ')[0] == "probebias", "Wrong start of line %d! Expected: probebias" % (ln+1)
-  for b in xrange(nBlock):
+  for b in range(nBlock):
     for i, v in enumerate(X[ln].strip().split()[int(b==0):]):
       AP['probebias'][b,i] = v
     ln += 1
-  if VERBOSE: print " > Analog parameters loaded."
+  if VERBOSE: print(" > Analog parameters loaded.")
 
 
 def load_neuron_config(X, neuron, VERBOSE):
-  if VERBOSE: print " > Loading neuron configuration."
+  if VERBOSE: print(" > Loading neuron configuration.")
   for ln,x in enumerate(X):
     if "ud_colconfig" in x:
-      if VERBOSE: print " > Start of neuron config detected at line %d." % (ln+2)
+      if VERBOSE: print(" > Start of neuron config detected at line %d." % (ln+2))
       break
-  for i in xrange(nBlock * nNeuronPerBlock):
+  for i in range(nBlock * nNeuronPerBlock):
     try: # test next line
       _,nid,_,bitstring = X[ln+1].strip().split(' ')
       if int(nid) == i: # next line holds config
@@ -211,20 +218,20 @@ def load_neuron_config(X, neuron, VERBOSE):
     except:
       pass # nothing to be done
     _,nid,_,bitstring = X[ln].strip().split(' ')
-    if VERBOSE: print "   > Neuron %3d set to '%s' (from line %d)." % (i, bitstring, ln+1)
+    if VERBOSE: print("   > Neuron %3d set to '%s' (from line %d)." % (i, bitstring, ln+1))
     nrn = Neuron(i)
     nrn.set_config(bitstring)
     neuron[nrn.block, nrn.blockid] = nrn
-  if VERBOSE: print " > Neuron configuration loaded."
+  if VERBOSE: print(" > Neuron configuration loaded.")
 
 
 def load_driver_config(X, driver, VERBOSE):
-  if VERBOSE: print " > Loading synapse driver configuration."
+  if VERBOSE: print(" > Loading synapse driver configuration.")
   for ln,x in enumerate(X):
     if "ud_rowconfig" in x:
-      if VERBOSE: print " > Start of syndriver config detected at line %d." % (ln+2)
+      if VERBOSE: print(" > Start of syndriver config detected at line %d." % (ln+2))
       break
-  for i in xrange(nBlock * nDrvPerBlock):
+  for i in range(nBlock * nDrvPerBlock):
     try: # test next line
       _,sid,_,bitstring = X[ln+1].strip().split(' ')
       if int(sid) == i: # next line holds config
@@ -232,20 +239,20 @@ def load_driver_config(X, driver, VERBOSE):
     except:
       pass # nothing to be done
     _,sid,_,bitstring = X[ln].strip().split(' ')
-    if VERBOSE: print "   > Driver %3d set to '%s' (from line %d)." % (i, bitstring, ln+1)
+    if VERBOSE: print("   > Driver %3d set to '%s' (from line %d)." % (i, bitstring, ln+1))
     drv = Driver(i)
     drv.set_config(bitstring)
     driver[drv.block, drv.blockid] = drv
-  if VERBOSE: print " > Synapse driver configuration loaded."
+  if VERBOSE: print(" > Synapse driver configuration loaded.")
 
 
 def load_weight_matrix(X, W, driver, VERBOSE):
   for ln,x in enumerate(X):
     if "ud_weight" in x:
-      if VERBOSE: print " > Start of weight matrix detected at line %d." % (ln+2)
+      if VERBOSE: print(" > Start of weight matrix detected at line %d." % (ln+2))
       ln += 1  # afterwards ln points to first line with syndrv config
       break
-  for i in xrange(nBlock*nNeuronPerBlock):
+  for i in range(nBlock*nNeuronPerBlock):
     x = X[ln+i].strip()
     assert i == int(x[2:5])
     W[i] = [int(w, 16) for w in x[6:].split(' ')]
@@ -256,7 +263,7 @@ def load_weight_matrix(X, W, driver, VERBOSE):
     s0, s1 = sdict[drv0.excinh], sdict[drv1.excinh]
     W0[:,i] = s0 * w[:nNeuronPerBlock]
     W1[:,i] = s1 * w[nNeuronPerBlock:]
-  if VERBOSE: print " > Weight matrix loaded."
+  if VERBOSE: print(" > Weight matrix loaded.")
   return W0, W1
 
 
@@ -280,7 +287,7 @@ class SpikeyConfig(object):
         self.load_sc()
 
     def load_sc(self):
-        if self.VERBOSE: print " > Load Spikey configuration from '%s'." % self.srcfile
+        if self.VERBOSE: print(" > Load Spikey configuration from '%s'." % self.srcfile)
         f = open(self.srcfile)
         X = f.readlines()
         load_chip_param(X, self.CP, self.VERBOSE)
@@ -290,7 +297,7 @@ class SpikeyConfig(object):
         load_driver_config(X, self.driver, self.VERBOSE)
         self.W0, self.W1 = load_weight_matrix(X, self.W, self.driver, self.VERBOSE)
         f.close()
-        if self.VERBOSE: print " > Spikey configuration loaded."
+        if self.VERBOSE: print(" > Spikey configuration loaded.")
 
 
 # # # # # # # # # # # # # # # # # # # # # # # #

@@ -28,7 +28,7 @@ def options(opt):
 
 
 def configure(conf):
-    print "==== %s ====" % APPNAME
+    print("==== %s ====" % APPNAME)
     conf.load('compiler_c')
     conf.load('compiler_cxx')
     conf.load('python')

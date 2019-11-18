@@ -70,13 +70,23 @@ void createLogger(int level, std::string filename)
 // default argument handling
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyspikey_overloads_autocalib, autocalib, 0, 2)
 
+#if PY_MAJOR_VERSION >= 3
+int
+#else
+void
+#endif
+init_numpy()
+{
+    import_array();
+} 
+
 // python-module supported by BOOST library
 BOOST_PYTHON_MODULE(pyhal_c_interface_s1v2)
 {
 	using namespace boost::python;
 
 	// For numpy C API
-	import_array();
+	init_numpy();
 
 	//! returns hardware availability status
 	def("hardwareAvailable", &hardwareAvailable);

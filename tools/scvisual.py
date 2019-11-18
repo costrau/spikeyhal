@@ -7,6 +7,10 @@
 # # #                                                           # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from past.utils import old_div
 import scparse as sc
 from scparse import Driver, Neuron   # for plotting the legend
 
@@ -72,11 +76,11 @@ PLOT = True                     # True or False (= only parse spikeyconfig.out f
 # # # # # # # COLOR DEFINITIONS # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # #
 
-if VERBOSE: print " > Selected matplotlib backend: %s" % MPLBACKEND
+if VERBOSE: print(" > Selected matplotlib backend: %s" % MPLBACKEND)
 import matplotlib
 matplotlib.use(MPLBACKEND)
 
-if VERBOSE: print " > Zoom is %.1f" % ZOOM
+if VERBOSE: print(" > Zoom is %.1f" % ZOOM)
 
 import numpy as np
 import pylab as pl
@@ -109,7 +113,7 @@ try:
     text = p.stdout.read()
     widthmm = float(text.strip())
     widthinch = 0.0393701 * widthmm
-    screendpi = widthpix / widthinch
+    screendpi = old_div(widthpix, widthinch)
     assert 60 < screendpi < 400              # reasonable?
 except:
     screendpi = 90.             # should roughly fit most monitors
@@ -139,12 +143,12 @@ mpl_config = {
 
 def apply_mpl_settings(config):
   import matplotlib as mpl
-  if VERBOSE: print " > Adjusting matplotlib defaults"
-  for key,val in config.iteritems():
+  if VERBOSE: print(" > Adjusting matplotlib defaults")
+  for key,val in list(config.items()):
     s = ""
-    for k,v in val.iteritems():
+    for k,v in list(val.items()):
         s += k + "=%s, " % str(v)
-    if VERBOSE: print "   > Set '%s' to %s" % (key, s[:-2])
+    if VERBOSE: print("   > Set '%s' to %s" % (key, s[:-2]))
     mpl.rc(key, **val)
 
 
@@ -338,7 +342,7 @@ def draw_legend():
 
 apply_mpl_settings(mpl_config)
 
-print " > Load Spikey configuration from '%s'." % srcfile
+print(" > Load Spikey configuration from '%s'." % srcfile)
 
 SC = sc.SpikeyConfig(srcfile, VERBOSE)
 
@@ -350,7 +354,7 @@ W0, W1 = SC.W0, SC.W1
 # plotting
 if PLOT:
   pl.interactive(False)
-  print " > Plotting... (this may take a moment)"
+  print(" > Plotting... (this may take a moment)")
   # setup figure and axes
   w,h = 12., 7.5
   fig = pl.figure(figsize=(w,h))
@@ -359,7 +363,7 @@ if PLOT:
   except:
     pass
   w,h = fig.get_figwidth(),fig.get_figheight()
-  rfig = w/h
+  rfig = old_div(w,h)
   w = 0.39
   h = w * 256./192. * rfig
   b = 0.16
@@ -450,7 +454,7 @@ if PLOT:
               img=mpimg.imread("spikey_gold_label_medium.png")
               imgplot = ax.imshow(img)
           except:
-              print " > WARNING: Photo of chip not found!"
+              print(" > WARNING: Photo of chip not found!")
   # show the plot
   pl.interactive(True)
   pl.show()
@@ -470,11 +474,11 @@ def update_driver_axes(ax_w, ax_d, wname): # driver and weight axes, wname is 'W
   global ylimW
   ymin, ymax = ax_w.get_ylim()
   if not ((ymin, ymax) == ylimW[wname]):
-    if VERBOSE: print " > Resizing %s driver axes and text." % dict(WL='left', WR='right')[wname]
+    if VERBOSE: print(" > Resizing %s driver axes and text." % dict(WL='left', WR='right')[wname])
     ylimW[wname] = (ymin, ymax)
     y0, y1 = ax_w.get_position().y0, ax_w.get_position().y1
     h = y1 - y0
-    wd = h * 3.7 / (ymax-ymin) / rfig
+    wd = old_div(h * 3.7 / (ymax-ymin), rfig)
     if wname == 'WL':
       rect = 0.432,y0,wd,h
     elif wname == 'WR':
@@ -483,14 +487,14 @@ def update_driver_axes(ax_w, ax_d, wname): # driver and weight axes, wname is 'W
     # resize text
     for ch in ax_d.get_children():
       if isinstance(ch, pl.Text):
-        ch.set_fontsize(1.5 * nDrvPerBlock/(ymax-ymin))
+        ch.set_fontsize(old_div(1.5 * nDrvPerBlock,(ymax-ymin)))
 
 # readjust the neurons
 def update_neuron_axes(ax_w, ax_n, wname): # neuron and weight axes, wname is 'WL' or 'WR'
   global xlimW
   xmin, xmax = ax_w.get_xlim()
   if not ((xmin, xmax) == xlimW[wname]):
-    if VERBOSE: print " > Resizing %s neuron axes and text." % dict(WL='left', WR='right')[wname]
+    if VERBOSE: print(" > Resizing %s neuron axes and text." % dict(WL='left', WR='right')[wname])
     xlimW[wname] = (xmin, xmax)
     x0, x1 = ax_w.get_position().x0, ax_w.get_position().x1
     w = x1 - x0
@@ -504,7 +508,7 @@ def update_neuron_axes(ax_w, ax_n, wname): # neuron and weight axes, wname is 'W
     # resize text
     for ch in ax_n.get_children():
       if isinstance(ch, pl.Text):
-        ch.set_fontsize(1.5 * nNeuronPerBlock/abs(xmax-xmin))
+        ch.set_fontsize(old_div(1.5 * nNeuronPerBlock,abs(xmax-xmin)))
 
 # upon draw event
 PAUSING = False
@@ -517,9 +521,9 @@ def on_draw(event):
   update_driver_axes(ax_w=axes['WR'], ax_d=axes['DR'], wname='WR')
   update_neuron_axes(ax_w=axes['WL'], ax_n=axes['NL'], wname='WL')
   update_neuron_axes(ax_w=axes['WR'], ax_n=axes['NR'], wname='WR')
-  if VERBOSE: print " > Enter pl.pause()"
+  if VERBOSE: print(" > Enter pl.pause()")
   pl.pause(0.75)
-  if VERBOSE: print " > Leave pl.pause()"
+  if VERBOSE: print(" > Leave pl.pause()")
   PAUSING = False
   pl.draw()
 
@@ -597,27 +601,27 @@ axes['DR'].format_coord = lambda x,y: "DRIVER %03d" % int(nDrvPerBlock + round(y
 
 def on_close(event):
   #fig.canvas.mpl_disconnect(connect_id_draw)
-  if VERBOSE: print ' > Window closed.'
+  if VERBOSE: print(' > Window closed.')
 
 fig.canvas.mpl_connect('close_event', on_close)
 
 # save figure
 if PLOT and (pngfile is not None):
-  print " > Save figure to '%s' at %d dpi." % (pngfile, DPI)
+  print(" > Save figure to '%s' at %d dpi." % (pngfile, DPI))
   fig.savefig(pngfile, dpi=DPI)
-  if VERBOSE: print " > Done."
+  if VERBOSE: print(" > Done.")
 else:
-  print " > Figure will NOT be saved."
-  if VERBOSE: print " > Done."
+  print(" > Figure will NOT be saved.")
+  if VERBOSE: print(" > Done.")
 
 # If not in interactive mode, we have to block the window
 # to prevent python interpreter from exit
 # Here, we only check if ipython is running.
 try:
   if __IPYTHON__:
-    if VERBOSE: print ' > ipython detected. Staying interactive.'
+    if VERBOSE: print(' > ipython detected. Staying interactive.')
 except:
-  if VERBOSE: print ' > No ipython detected. Blocking window.'
+  if VERBOSE: print(' > No ipython detected. Blocking window.')
   pl.interactive(False)
   #pl.show(block=True)
   pl.show()
